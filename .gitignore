@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local environments
+.venv/
+venv/
+.env
+
+# OS / editor noise
+.DS_Store
+
+# Large datasets
+data/raw/
+data/processed/
+
+# Generated artifacts
+reports/generated/
