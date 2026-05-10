@@ -17,14 +17,6 @@ from pyspark.ml.feature import VectorAssembler
 # %% Cell 2
 LABEL_COLUMN='price'
 SEED=42
-PARQUET_PATH = Path(
-    os.environ.get(
-        "AC2_ANALYSIS_PARQUET_PATH",
-        Path(__file__).resolve().with_name("total_data.parquet"),
-    )
-).expanduser()
-if not PARQUET_PATH.exists():
-    raise FileNotFoundError(f"Parquet file not found: {PARQUET_PATH}")
 
 spark = SparkSession.builder \
     .appName("Airbnb") \
@@ -38,7 +30,7 @@ raw_df = (
     .option("quote", "\"")
     .option("escape", "\"")
     .option("mode", "PERMISSIVE")
-    .parquet(str(PARQUET_PATH))
+    .parquet("./total_data.parquet")
 )
 
 raw_df.createOrReplaceTempView('raw_listing')
@@ -183,6 +175,46 @@ selected_df = spark.sql("""
 """)
 
 # %% Cell 29
+def box_plot(column):
+    column_pd = selected_df.select(column).toPandas()[column].dropna()
+    fig, (ax1, ax2) = plt.subplots(1,2)
+    fig.set_size_inches(16,6)
+    _ = sns.boxplot(x=column_pd, ax = ax1)
+    ax1.set_title(f'{column} boxplot')
+    ax2.set_title(f'Zooming in the {column} boxplot')
+    ax2.set_xlim((-0.1,1.1*get_max_fence(column)))
+    _ = sns.boxplot(x=column_pd, ax = ax2)
+
+price_pd = selected_df.select("price").toPandas()
+
+plt.figure(figsize=(10, 6))
+plt.hist(price_pd["price"].dropna(), bins=50, edgecolor="black")
+plt.title("Distribuicao de valores do price")
+plt.xlabel("Price")
+plt.ylabel("Frequencia")
+plt.show()
+
+plt.figure(figsize=(10, 3))
+plt.boxplot(price_pd["price"].dropna(), vert=False)
+plt.title("Boxplot de price")
+plt.xlabel("Price")
+plt.show()
+
+price_q1 = price_pd["price"].quantile(0.25)
+price_q3 = price_pd["price"].quantile(0.75)
+price_iqr = price_q3 - price_q1
+price_zoom_min = max(0, price_q1 - 1.5 * price_iqr)
+price_zoom_max = price_q3 + 1.5 * price_iqr
+
+plt.figure(figsize=(10, 3))
+plt.boxplot(price_pd["price"].dropna(), vert=False)
+plt.xlim(price_zoom_min, price_zoom_max)
+plt.title("Boxplot de price com zoom")
+plt.xlabel("Price")
+plt.show()
+
+box_plot("price")
+
 price_max_fence = get_max_fence('price')
 print(price_max_fence)
 
