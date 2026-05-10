@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "ipykernel>=7.2.0",
     "matplotlib>=3.10.9",
     "pyspark>=4.1.1",
     "seaborn>=0.13.2",
