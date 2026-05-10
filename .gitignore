@@ -21,3 +21,5 @@ data/processed/
 
 # Generated artifacts
 reports/generated/
+
+*.parquet
