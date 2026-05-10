@@ -30,13 +30,6 @@ spark = SparkSession.builder \
     .appName("Airbnb") \
     .getOrCreate()
 
-# spark = SparkSession.builder \
-#     .master("local[4]") \
-#     .appName("Airbnb") \
-#     .config("spark.driver.memory", "4g") \
-#     .config("spark.sql.shuffle.partitions", "64") \
-#     .getOrCreate()
-
 raw_df = (
     spark.read
     .option("header", "true")
@@ -94,8 +87,8 @@ spark.sql(f"SELECT\n    {null_count_expr}\nFROM selected_df").show()
 
 # %% Cell 11
 rows_before_drop = selected_df.count()
-selected_df = selected_df.drop('security_deposit')
-selected_df = selected_df.fillna({'cleaning_fee': '0'})
+selected_df = selected_df.drop('security_deposit', 'cleaning_fee')
+# selected_df = selected_df.fillna({'cleaning_fee': '0'})
 
 # %% Cell 12
 selected_df = selected_df.dropna()
@@ -129,12 +122,13 @@ selected_df = spark.sql("""
         TRY_CAST(TRY_CAST(beds AS DOUBLE) AS INT) AS beds,
         amenities,
         TRY_CAST(REGEXP_REPLACE(price, '[\\\\$,]', '') AS DOUBLE) AS price,
-        TRY_CAST(REGEXP_REPLACE(cleaning_fee, '[\\\\$,]', '') AS DOUBLE) AS cleaning_fee,
         TRY_CAST(require_guest_profile_picture AS BOOLEAN) AS require_guest_profile_picture,
         TRY_CAST(require_guest_phone_verification AS BOOLEAN) AS require_guest_phone_verification, 
         TRY_CAST(month AS INT) AS month
     FROM selected_df
 """)
+
+# TRY_CAST(REGEXP_REPLACE(cleaning_fee, '[\\\\$,]', '') AS DOUBLE) AS cleaning_fee,
 
 selected_df.createOrReplaceTempView("selected_df")
 
@@ -182,7 +176,6 @@ selected_df = spark.sql("""
         beds,
         amenities,
         price,
-        cleaning_fee,
         require_guest_profile_picture,
         require_guest_phone_verification,
         month
@@ -226,7 +219,6 @@ selected_df = spark.sql(f"""
         beds,
         amenities,
         price,
-        cleaning_fee,
         require_guest_profile_picture,
         require_guest_phone_verification,
         month
@@ -262,7 +254,6 @@ selected_df = spark.sql("""
         beds,
         amenities,
         price,
-        cleaning_fee,
         require_guest_profile_picture,
         require_guest_phone_verification,
         month,
@@ -290,7 +281,6 @@ selected_df = spark.sql(f"""
         bedrooms,
         beds,
         price,
-        cleaning_fee,
         require_guest_profile_picture,
         require_guest_phone_verification,
         month,
@@ -340,7 +330,6 @@ df_label_encoder = spark.sql("""
         s.bedrooms,
         s.beds,
         s.price,
-        s.cleaning_fee,
         CASE
             WHEN s.require_guest_profile_picture IS TRUE THEN 1
             WHEN s.require_guest_profile_picture IS FALSE THEN 0
@@ -373,11 +362,11 @@ models = [
         )
     ),
     (
-        "Decision Tree Regressor - tuned depth 12",
+        "Decision Tree Regressor",
         DecisionTreeRegressor(
             labelCol=LABEL_COLUMN,
             featuresCol="features",
-            maxDepth=12,
+            maxDepth=30,
             minInstancesPerNode=20,
             minInfoGain=0.0,
             maxBins=64,
@@ -396,7 +385,6 @@ feature_cols = [
     "bathrooms",
     "bedrooms",
     "beds",
-    "cleaning_fee",
     "month",
     "property_type",
     "require_guest_profile_picture",
