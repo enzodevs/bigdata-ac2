@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "marp-slide": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "034f16b36b39726dd46b91686230ca2a5c753535fdb0d16b6a5bcb2a93a73df0"
+    }
+  }
+}
